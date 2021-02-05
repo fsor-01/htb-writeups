@@ -1,0 +1,232 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="Responsive sidebar template with sliding effect and dropdown menu based on bootstrap 3">
+    <title>Personal Portfolio</title>
+
+    <!-- using online links -->
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+        integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous"> -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+        integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+    <link rel="stylesheet" href="//malihu.github.io/custom-scrollbar/jquery.mCustomScrollbar.min.css">
+
+    <!-- FONT -->
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300&display=swap" rel="stylesheet"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;700&display=swap" rel="stylesheet">
+
+
+    <!-- using local links -->
+    <!-- <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="../node_modules/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css"> -->
+
+    <link rel="stylesheet" href="{% static '/writeapp/css/main.css' %}">
+    <link rel="stylesheet" href="{% static '/writeapp/css/sidebar-themes.css' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'writeapp/img/fsor.jpg' %}" />
+</head>
+
+<body>
+    <div class="page-wrapper default-theme sidebar-bg bg1 toggled">
+        <nav id="sidebar" class="sidebar-wrapper">
+            <div class="sidebar-content">
+                <!-- sidebar-brand  -->
+                <div class="sidebar-item sidebar-brand">
+                    <!-- <a href="{% url 'home' %}">Fsor</a> -->
+                </div>
+                <!-- sidebar-header  -->
+                <div class="sidebar-item sidebar-header d-flex flex-nowrap">
+                    <!-- <div class="user-pic">
+                        <img class="img-responsive img-rounded" src="{% static 'writeapp/img/fsor.jpg' %}" alt="User picture">
+                    </div> -->
+                    <div class="user-info">
+                          <span class="user-name">Julius Ryan A. Turla
+                               <!-- <strong>Smith</strong> -->
+                           </span>
+
+                        <span class="user-role">Aspiring Penetration Tester</span>
+                        <span class="user-status">
+                            <i class="fa fa-circle"></i>
+                            <span>Online</span>
+                            <script src="https://www.hackthebox.eu/badge/360998">thb</script>
+                        </span>
+                    </div>
+                </div>
+                <!-- sidebar-search  -->
+                <div class="sidebar-item sidebar-search">
+                    <div>
+                        <div class="input-group">
+                            <input type="text" class="form-control search-menu" placeholder="Search...">
+                            <div class="input-group-append">
+                                <span class="input-group-text">
+                                    <i class="fa fa-search" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- sidebar-menu  -->
+                <div class=" sidebar-item sidebar-menu">
+                    <ul>
+                      <li>
+                          <a href="{% url 'home' %}">
+                              <i class="fa fa-info-circle "></i>
+                              <span class="menu-text">About</span>
+                          </a>
+                      </li>
+                        <li class="header-menu">
+                            <span>HacktheBox Writeups</span>
+                        </li>
+                        <li class="sidebar-dropdown">
+                            <a href="#">
+                                <i class="fab fa-linux"></i>
+                                <span class="menu-text">Linux</span>
+
+                            </a>
+                            <div class="sidebar-submenu">
+                                <ul>
+                                    <li>
+                                        <a href="{% url 'feline' %}">Feline
+                                            <!-- <span class="badge badge-pill badge-success">Pro</span> -->
+                                        </a>
+                                    </li>
+                                    <!-- <li>
+                                        <a href="#">linux2 2</a>
+                                    </li>
+                                    <li>
+                                        <a href="#">linux3 3</a>
+                                    </li> -->
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="sidebar-dropdown">
+                            <a href="#">
+                                <!-- <i class="fa fa-shopg-cart"></i> -->
+                                <i class="fab fa-windows"></i>
+                                <span class="menu-text">Windows</span>
+                                <!-- <span class="badge badge-pill badge-danger">3</span> -->
+                            </a>
+                            <div class="sidebar-submenu">
+                                <ul>
+                                    <li>
+                                        <a href="{% url 'querier' %}">Querier</a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'blackfield' %}">Blackfield</a>
+                                    </li>
+                                    <!-- <li>
+                                        <a href="#">Windows 3</a>
+                                    </li> -->
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="sidebar-dropdown">
+                            <a href="#">
+                                <!-- <i class="fa fa-shopg-cart"></i> -->
+                                <i class="fab fa-viacoin"></i>
+                                <span class="menu-text">Synack Track</span>
+                                <!-- <span class="badge badge-pill badge-danger">3</span> -->
+                            </a>
+                            <div class="sidebar-submenu">
+                                <ul>
+                                    <li>
+                                        <a href="{% url 'baby_international' %}">Baby-International</a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'babysql' %}">Baby-SQL</a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'passage' %}">Passage</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <li class="header-menu">
+                            <span>Extra</span>
+                        </li>
+                        <li>
+                            <a href="{% url 'htbj' %}">
+                                <i class="fa fa-road"></i>
+                                <span class="menu-text">My OSCP Journey</span>
+                            </a>
+                        </li>
+                        <!-- <li>
+                            <a href="#">
+                                <i class="fas fa-dice-d6"></i>
+                                <span class="menu-text">HacktheBox</span>
+                            </a>
+                        </li> -->
+                        <li>
+                            <a href="#">
+                                <i class="fa fa-folder"></i>
+                                <span class="menu-text">Notes</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- sidebar-menu  -->
+            </div>
+
+        </nav>
+
+        <main class="page-content pt-2">
+
+          <div class="form-group col-md-12">
+              <a id="toggle-sidebar" class="btn btn-dark rounded-0" href="#">
+                  <span><i class="fas fa-bars"></i></span>
+              </a>
+
+          </div>
+
+
+{% block content %}{% endblock %}
+
+</main>
+
+</div>
+<!-- page-wrapper -->
+
+<!-- using online scripts -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+    integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous">
+</script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+    integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous">
+</script> -->
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Popper JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+<script src="//malihu.github.io/custom-scrollbar/jquery.mCustomScrollbar.concat.min.js"></script>
+
+<!-- using local scripts -->
+<!-- <script src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script src="../node_modules/popper.js/dist/umd/popper.min.js"></script>
+<script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="../node_modules/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js"></script> -->
+
+
+<script src="{% static 'writeapp/js/main.js' %}"></script>
+</body>
+
+</html>

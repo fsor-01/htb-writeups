@@ -1,0 +1,83 @@
+{% extends 'writeapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div id="overlay" class="overlay"></div>
+<div class="container-fluid p-5">
+  <div class="row">
+      <div class="form-group col-md-12">
+        <h2 class="mb-5"><i class="fa fa-paper-plane"></i> About this page</h2>
+        <p>I created this site to learn web development using python and to
+        improve my skills in cybersecurity by doing writeups of challenges done via Hack the Box. </p>
+        <p class="mt-3 mb-3">Hack The Box is an online platform allowing you to test your penetration testing skills and exchange ideas and methodologies with other members of similar interests.</p>
+
+        <p>To know more about HTB, you may follow this link.</p>
+        <p> <a href="https://www.hackthebox.eu/">https://www.hackthebox.eu/</a> </p>
+
+        <p class="mt-3">I will update this page and add more contents whenever I have available time.</p>
+
+      </div>
+
+
+
+
+
+<h2 class="mt-5 mb-5"><i class="fas fa-pencil-alt"></i> HTB Writeups</h2>
+<hr>
+<div class="row">
+  <div class="col mb-4">
+    <div class="card" style="width:400px">
+      <img src="{% static 'writeapp/img/querier.png' %}" class="card-img-top" alt="Querier">
+      <div class="card-body">
+        <h5 class="card-title">HacktheBox — Querier</h5>
+        <p class="card-text">This is rated as a medium difficulty machine but once proper enumeration is done, the rest of the  steps towards root are straightforward.</p>
+        <a href="{% url 'querier' %}" class="btn btn-primary stretched-link">Read more</a>
+      </div>
+    </div>
+  </div>
+  <div class="col mb-4">
+    <div class="card" style="width:400px">
+      <img src="{% static 'writeapp/img/blackfield.png' %}" class="card-img-top" alt="Blackfield">
+      <div class="card-body">
+        <h5 class="card-title">HacktheBox — Blackfield</h5>
+        <p class="card-text">This is rated hard in HTB and it really is for me. I have learned new tricks for privilege escalation and token abuse.</p>
+        <p class="card-text">Patience and a lot of enumeration is needed to get initial foothold and there is a lot of user pivoting involve to get root access.</p>
+        <a href="{% url 'blackfield' %}" class="btn btn-primary stretched-link">Read more</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col mb-4">
+    <div class="card" style="width:400px">
+      <img src="{% static 'writeapp/img/feline.jpg' %}" class="card-img-top" alt="...">
+      <div class="card-body">
+        <h5 class="card-title">HacktheBox — Feline</h5>
+        <p class="card-text">This is a difficult box if you have limited knowledge with docker and containers.
+The initial foothold requires research as there is no straight forward PoC that will
+run off the bat. </p>
+        <a href="{% url 'feline' %}" class="btn btn-primary stretched-link">Read more</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col mb-4">
+    <div class="card" style="width:400px">
+      <img src="{% static 'writeapp/img/passage.png' %}" class="card-img-top" alt="...">
+      <div class="card-body">
+        <h5 class="card-title">HacktheBox — Passage</h5>
+        <p class="card-text"> <b> Initial Shell Vulnerability Exploited:</b>
+        Cute News 2.1.2 Authenticated Arbitrary File Upload
+
+        <b>Vulnerability Description:</b>
+        In the "Media Manager" area, Users with low privileges (Editor) can bypass
+        file upload restrictions, resulting in arbitrary command execution.</p>
+        <a href="{% url 'passage' %}" class="btn btn-primary stretched-link">Read more</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

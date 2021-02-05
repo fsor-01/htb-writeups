@@ -1,0 +1,200 @@
+{% extends 'writeapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static '/writeapp/css/htbj.css' %}">
+
+<div id="overlay" class="overlay"></div>
+<div class="container-fluid p-5">
+  <div class="row">
+    <div class="form-group col-md-12">
+
+      <h2 class="heading2">Whoami?</h2>
+      <span class="p2">
+      <span class="p-5"></span>
+      <!-- <span style="font-size:1.2rem; font-weight:100;"> -->
+      <p>I am an experienced  network engineer and a Family man with a 6 yrs old daughter at time of writing.</p>
+      <p class="mb-5">My OSCP journey started around 1st quarter of 2020. </p>
+      <hr>
+
+      <h2 class="mb-5 mt-5">Why I did it? </h2>
+
+      <p>I have been hearing about this field since I started my IT career but never really thought of getting into it. </p>
+      <p class="mb-5"> I thought that this was only for those who started young and have extreme coding skills.</p>
+
+      <p>Then after 5 years of doing same things everyday (networking), I got bored and wanted a challenge.</p>
+      <p>The thought of entering the field of penetration testing came to mind so I asked my friends who are already
+        in the field and all of them have common advise ,</p>
+      <p><i> "If you want to get in, you must do the OSCP" </i>.</p>
+      </span>
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h2 class="mb-5 mt-5">Thus my journey begins.</h2>
+
+      <span class="p2">
+      <p>As others have done, my main platform of choice for preparing for OSCP is Hack The Box.</p>
+      <p>I got the VIP subscription so I can practice with retired boxes and read some walkthroughs.</p>
+
+      <p class="mt-5">This has really helped me a lot as I have no prior hacking experience.</p>
+      <p>Reading other's walkthrough and watching IPPsec's videoes has boosted my skills and confidence .</p>
+
+      <p class="mt-5">I followed the TJnulls list of OSCP like boxes and other easy/medium boxes for the first 2 months on a daily basis.</p>
+      <p>Once I got familiar with the flow, I started including live boxes on the mix and if I am stuck, I rely on forums to get going.</p>
+      <p>I also do python studying during this time and to avoid burnout, I alternate between HTB and python learning.</p>
+
+      <p class="mt-5">Fast forward, after 5 months of doign HTB, I managed to get 66 box rooted and elevated my status from n00b to pro-hacker.</p>
+      <p>I finally stopped procrastinating and paid for the 30 days OSCP lab time.</p>
+      <p>This is where it got serious. I have a regular 9 hours work, so I allocated time 2 hours before and 2 hours after my shift to atleast do  1 boxes everyday in the lab. </p>
+      <p>I tried reading the PDF materials , but most of it have already been learned during pre PWK learning so I skipped it. </p>
+
+      <p class="mt-5">Some machines in the Lab are more difficult than the ones I encountered in HTB and vice-versa. </p>
+      <p>Was able to pawn 37 boxes in the Lab and scheduled my exam 1 week after the lab expiration.</p>
+      </span>
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h2 class="mb-5 mt-5">My 1st attempt Dec 29 2020 7 am. (FAILED)</h2>
+
+      <span class="p2">
+      <p>I literally cried as I have invested so much effort and was planning on nailing this 1st time.</p>
+      <p>I got 67.5 pts.  BoF , 20 pts, 10 pts user on 25 and nothing on the other 20.</p>
+
+      <p class="mt-5">I hit the  67.5 point mark at the 12th hour, so I got overconfident that I only need to priv Esc on the 25 </p>
+      <p>or get a low-priv user on the other 20  to get another 10 pts to pass.. </p>
+
+      <p class="mt-5">I started writing my report at this point , priv escalation is where I am confident and I always thought</p>
+      <p>that once I get a user, then it is good as complete. </p>
+
+      <p class="mt-5">Man I was so wrong, I tried for hours until the very last minute of the exam and was not able to priv esc.</p>
+      <p>I switched from the 25 pt box and the other 20 at random  phases during the remaining time hoping to get another </p>
+      <p>10 pts and this throwed me out of my game.</p>
+
+      <p class="mt-5 mb-5">I also didn't sleep and  was taking only little breaks like 5 mins every 2 hours which is not really good.</p>
+
+      <p>I turned emo during 1st week of failing the exam and had doubts whether I have to push or just go back to my </p>
+      <p>network career. With the support of my wife and daughter, I got back and scheduled again for another attempt.</p>
+
+      <p class="mt-5">Before the exam, I did a few  HTB round to refresh and watched random youtube videos explaining</p>
+      <p>specific attack vectors. I want to avoid burn out before the 2nd attempt so rather than prepping for technical , I prepped myself mentally.</p>
+
+      <p class="mt-5">Watched some K-dramas, played video games and such.  </p>
+      <p>I reminded myself that this is not about learning a specific technology to pass, it is all about the methodology.</p>
+      <p>The methodology acquired from IPPsec videos and HTB from previous months has been  already established.</p>
+      <p>I need to start fresh. Expect the best and prepare for the worst.</p>
+      </span>
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h2 class="mb-5 mt-5">2nd attempt January 29 2020  9 am. (Passed!)</h2>
+
+      <span class="p2">
+      <p>I learned from my previous attempt  and  took 10-15 mins break every hour .</p>
+      <p>I also didn't waste too much time on reporting and organizing my report until I know I got the required pts to pass. </p>
+      <p>I took screenshots along the way and just dumped them on  Word and CherryTree.</p>
+
+      <p class="mt-5 mb-5">Luckily for me, I got a repeat of my 25 pt box which I had trouble doing priv esc before. </p>
+
+      <p>This saved me time on doing the user part.  </p>
+
+      <p class="mt-5">In short, I was able to get enough pts to pass this time. </p>
+      <p>BoF(25) + 25 + 20 = 70 pts. </p>
+
+      <p class="mt-5">Was not able to get foothold on the other 20 pointer .  </p>
+      <p>Once I got the 70 pts mark, I started gathering my notes. I did not want to fail due to missing screenshot as I read</p>
+      <p>stories of poeople pawning all the boxes and failing due to incomplete report.</p>
+
+      <p class="mt-5">I took a nap at the 18th hour for 3 hours. Then the last 3 hours of the exam, I tried again pawning the </p>
+      <p>remaining 20 and 10 pt box . But no luck til the last minute.</p>
+      </span>
+
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h2 class="mb-5 mt-5">Reporting </h2>
+
+      <span class="p2">
+      <p>I got so excited knowing that I have enough points and even though I lack sleep, I tried to complete my report</p>
+      <p>and submitted it right away after the exam time ended. Then I slept for good 6 hours and when I woke up, I reviewed my report and </p>
+      <p>noticed that I have a major typo. Instead of putting System Vuln 192.168.3.x , I placed 192.168.2.x on one of the machine.</p>
+
+      <p class="mt-5">I was so paranoid that I might fail due to this , because I only have exact 70 pts. I prayed that offsec will consider</p>
+      <p>given that I have complete screenshot. </p>
+
+      <p class="mt-5">Sunday 3 p.m , 30 hours after submitting my report. I got the email from offsec.</p>
+      <p>The first line gave me chills when I read " We are happy to inform you".</p>
+      <p>I didn't finish reading and Immediately called my wife to share the good news!</p>
+      </span>
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h2 class="mb-5 mt-5">My take and advice to others preparing for the OSCP.</h2>
+
+      <span class="p2 ls">
+      <ol>
+        <li class="bt">Hackthebox or similar platform is a must before enrolling in OSCP. </li>
+        <ul>
+          <li>The materials  Offsec provided in the course is awesome but it is not enough to pass the exam. </li>
+          <li>IPPSEC rocks! I mean this , 80% of what I have learned is from watching IPPsec videos on retired HTB boxes. <a href="https://www.youtube.com/channel/UCa6eh7gCkpPo5XXUDfygQQA">https://www.youtube.com/channel/UCa6eh7gCkpPo5XXUDfygQQA</a></li>
+          <li>I love reading writeups from 0xdf as he does good explanation beyond root on why and how the vulnerability works. <a href="https://0xdf.gitlab.io/"> https://0xdf.gitlab.io/</a></li>
+        </ul>
+        <li class="bt mt-5">This is a doable exam even though you have 0 hacking experience. </li>
+          <ul>
+            <li>Like many others, all you have to do is invest the time and with the right mindset, you too can be a part of the OSCP family.</li>
+          </ul>
+        <li class="bt mt-5">You can't memorize all the commands. Take good notes!</li>
+          <ul>
+            <li>I am sure there are people like "Mike Ross" that can remember everything he wants to remember.</li>
+            <p>But for ordinary people like myself, I have problems memorizing.</p>
+            <p>The key here is having good methodology. If you know what to search for, there are tons of notes available in the internet.</p>
+          </ul>
+      </ol>
+      </span>
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h2 class="mb-5 mt-5">Other  tools used during exam:</h2>
+
+      <span class="p2">
+      <p> <b> SecureCRT </b> -   This is a good terminal as it lets you configure macros and buttons. (I am lazy typing in  typing, i just create a 1 button call if I want to fire up my smb or http)</p>
+      <p> <b> CherryTree </b> -  Note taking program, dump all your commands /notes/screenshot here.</p>
+      <p> <b> NotePad ++ </b> - I like the dual view of notepad ++ and auto syntax highlighting for python. This also has other cool features like macros and compare.</p>
+      </span>
+
+      <span class="p-3"></span>
+      <hr>
+
+      <h3 class="mb-5 mt-5">For report template:</h3>
+
+      <span class="p2">
+      <p> <a href="https://github.com/whoisflynn/OSCP-Exam-Report-Template">https://github.com/whoisflynn/OSCP-Exam-Report-Template</a> </p>
+
+      <h3 class="mb-5 mt-5">TJnull's HTB/OSCP list:</h3>
+      <p> <a href="https://docs.google.com/spreadsheets/d/1dwSMIAPIam0PuRBkCiDI88pU3yzrqqHkDtBngUHNCw8/edit?usp=sharing">https://docs.google.com/spreadsheets/d/1dwSMIAPIam0PuRBkCiDI88pU3yzrqqHkDtBngUHNCw8/edit?usp=sharing</a></p>
+
+      <h3 class="mb-5 mt-5">My go to for command  and attack vector reference:</h3>
+
+      <p> <a href="https://book.hacktricks.xyz/">https://book.hacktricks.xyz/</a></p>
+      <p> <a href="https://github.com/swisskyrepo/PayloadsAllTheThings">https://github.com/swisskyrepo/PayloadsAllTheThings</a></p>
+      <p> <a href="https://ippsec.rocks/">https://ippsec.rocks/</a></p>
+
+      <p class="mt-5 mb-5">Thas is it, thank you for reading my  post.</p>
+      <p>Connect with me on <a href="https://www.linkedin.com/in/juliusturla/?originalSubdomain=ph"> Linkedin </a> if you need more advise, I'll be more than happy to help. </p>
+
+
+      </span>
+
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

